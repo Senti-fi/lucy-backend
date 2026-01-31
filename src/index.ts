@@ -157,7 +157,23 @@ app.post('/api/check-action', async (req: Request, res: Response) => {
   }
 });
 
-app.listen(port, () => {
+const server = app.listen(Number(port), '0.0.0.0', () => {
   console.log(`🚀 Lucy AI Backend running on port ${port}`);
   console.log(`📡 Health: http://localhost:${port}/health`);
 });
+
+// Graceful shutdown for Railway
+const shutdown = (signal: string) => {
+  console.log(`\n${signal} received, shutting down gracefully...`);
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
+  setTimeout(() => {
+    console.error('Forced shutdown after timeout');
+    process.exit(1);
+  }, 10000);
+};
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
